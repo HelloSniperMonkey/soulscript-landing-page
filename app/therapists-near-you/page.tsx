@@ -90,8 +90,8 @@ export default function TherapistsNearYouPage() {
           },
           {
             featureType: "road",
-            elementType: "geometry.stroke",
-            stylers: [{ color: "#212a37" }]
+    elementType: "geometry.stroke",
+    stylers: [{ color: "#212a37" }]
           },
           {
             featureType: "road",
@@ -358,7 +358,7 @@ export default function TherapistsNearYouPage() {
       
       // Calculate distances
       if (userPos) {
-        await calculateDistances(therapistsWithDetails, userPos)
+        await calculateDistances(therapistsWithDetails, userPos, mapInstance) // Pass mapInstance
       } else {
         setTherapists(therapistsWithDetails)
         addTherapistMarkers(therapistsWithDetails, mapInstance)
@@ -398,7 +398,7 @@ export default function TherapistsNearYouPage() {
     return statePart || ''
   }
 
-  const calculateDistances = async (therapistList: TherapistWithDistance[], userPos: { lat: number; lng: number }) => {
+  const calculateDistances = async (therapistList: TherapistWithDistance[], userPos: { lat: number; lng: number }, mapInstance: any) => {
     if (!window.google) return
 
     const service = new window.google.maps.DistanceMatrixService()
@@ -427,11 +427,11 @@ export default function TherapistsNearYouPage() {
         }).sort((a: TherapistWithDistance, b: TherapistWithDistance) => (a.distance || Infinity) - (b.distance || Infinity))
 
         setTherapists(updatedTherapists)
-        addTherapistMarkers(updatedTherapists, map)
+        addTherapistMarkers(updatedTherapists, mapInstance) // Use passed mapInstance
         setIsLoading(false)
       } else {
         setTherapists(therapistList)
-        addTherapistMarkers(therapistList, map)
+        addTherapistMarkers(therapistList, mapInstance) // Use passed mapInstance
         setIsLoading(false)
       }
     })
@@ -460,11 +460,11 @@ export default function TherapistsNearYouPage() {
 
       const infoWindow = new window.google.maps.InfoWindow({
         content: `
-          <div style="padding: 8px; max-width: 200px;">
-            <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold;">${therapist.name}</h3>
-            <p style="margin: 0 0 4px 0; font-size: 14px; color: #666;">${therapist.specialization.join(', ')}</p>
-            <p style="margin: 0 0 4px 0; font-size: 14px;">⭐ ${therapist.rating} (${therapist.reviewCount} reviews)</p>
-            <p style="margin: 0; font-size: 12px; color: #888;">${therapist.location.address}</p>
+          <div style="padding: 8px; max-width: 200px; color: #000;">
+        <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: bold; color: #000;">${therapist.name}</h3>
+        <p style="margin: 0 0 4px 0; font-size: 14px; color: #000;">${therapist.specialization.join(', ')}</p>
+        <p style="margin: 0 0 4px 0; font-size: 14px; color: #000;">⭐ ${therapist.rating} (${therapist.reviewCount} reviews)</p>
+        <p style="margin: 0; font-size: 12px; color: #333;">${therapist.location.address}</p>
           </div>
         `
       })
@@ -509,10 +509,10 @@ export default function TherapistsNearYouPage() {
     <>
       <Navbar />
       <div className="min-h-screen bg-gray-900 pt-16">
-        <div className="container mx-auto px-4 py-8">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-white mb-2">Find Therapists Near You</h1>
-            <p className="text-gray-300">
+        <div className="w-full p-4 max-w-none ">
+          <div className="mb-4 lg:mb-6">
+            <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">Find Therapists Near You</h1>
+            <p className="text-sm lg:text-base text-gray-300">
               {isLoading 
                 ? 'Searching for therapists near you...'
                 : userLocation 
@@ -522,9 +522,9 @@ export default function TherapistsNearYouPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-200px)]">
+          <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 h-[calc(100vh-180px)]">
             {/* Therapist List */}
-            <div className="overflow-y-auto space-y-4 pr-2">
+            <div className="w-full lg:w-2/5 xl:w-1/3 order-2 lg:order-none lg:h-full flex-1 lg:flex-none overflow-y-auto space-y-3 lg:space-y-4 pr-2 lg:pr-4">
               {isLoading ? (
                 <div className="flex items-center justify-center h-64">
                   <div className="text-center">
@@ -553,34 +553,34 @@ export default function TherapistsNearYouPage() {
                   }`}
                   onClick={() => handleTherapistSelect(therapist)}
                 >
-                  <CardHeader className="pb-3">
+                  <CardHeader className="pb-2 lg:pb-3">
                     <div className="flex items-start justify-between">
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-2 lg:space-x-3 min-w-0 flex-1">
                         <img 
                           src={therapist.imageUrl} 
                           alt={therapist.name}
-                          className="w-12 h-12 rounded-full object-cover"
+                          className="w-10 h-10 lg:w-12 lg:h-12 rounded-full object-cover flex-shrink-0"
                         />
-                        <div>
-                          <CardTitle className="text-lg text-white">{therapist.name}</CardTitle>
+                        <div className="min-w-0 flex-1">
+                          <CardTitle className="text-base lg:text-lg text-white truncate">{therapist.name}</CardTitle>
                           <div className="flex items-center space-x-2 mt-1">
                             <div className="flex items-center">
-                              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                              <span className="text-sm font-medium ml-1 text-white">{therapist.rating}</span>
-                              <span className="text-sm text-gray-400 ml-1">({therapist.reviewCount})</span>
+                              <Star className="w-3 h-3 lg:w-4 lg:h-4 fill-yellow-400 text-yellow-400" />
+                              <span className="text-xs lg:text-sm font-medium ml-1 text-white">{therapist.rating}</span>
+                              <span className="text-xs lg:text-sm text-gray-400 ml-1">({therapist.reviewCount})</span>
                             </div>
                             {therapist.distanceText && (
                               <>
-                                <span className="text-gray-500">•</span>
-                                <span className="text-sm text-blue-400 font-medium">{therapist.distanceText}</span>
+                                <span className="text-gray-500 hidden sm:inline">•</span>
+                                <span className="text-xs lg:text-sm text-blue-400 font-medium hidden sm:inline">{therapist.distanceText}</span>
                               </>
                             )}
                           </div>
                         </div>
                       </div>
                       {therapist.fees?.sessionFee && (
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-green-600">${therapist.fees.sessionFee}</div>
+                        <div className="text-right flex-shrink-0">
+                          <div className="text-sm lg:text-lg font-bold text-green-600">${therapist.fees.sessionFee}</div>
                           <div className="text-xs text-gray-500">per session</div>
                         </div>
                       )}
@@ -588,35 +588,37 @@ export default function TherapistsNearYouPage() {
                   </CardHeader>
                   
                   <CardContent className="pt-0">
-                    <div className="space-y-3">
+                    <div className="space-y-2 lg:space-y-3">
                       <div className="flex flex-wrap gap-1">
-                        {therapist.specialization.slice(0, 3).map((spec) => (
+                        {therapist.specialization.slice(0, 2).map((spec) => (
                           <Badge key={spec} variant="secondary" className="text-xs bg-gray-700 text-gray-200 border-gray-600">
                             {spec}
                           </Badge>
                         ))}
-                        {therapist.specialization.length > 3 && (
+                        {therapist.specialization.length > 2 && (
                           <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
-                            +{therapist.specialization.length - 3} more
+                            +{therapist.specialization.length - 2} more
                           </Badge>
                         )}
                       </div>
                       
-                      <p className="text-sm text-gray-300 line-clamp-2">{therapist.bio}</p>
+                      <p className="text-xs lg:text-sm text-gray-300 line-clamp-2">{therapist.bio}</p>
                       
                       <div className="flex items-center justify-between text-xs text-gray-400">
-                        <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-2 lg:space-x-4">
                           <div className="flex items-center">
                             <Clock className="w-3 h-3 mr-1" />
-                            {therapist.yearsOfExperience} years exp.
+                            <span className="hidden sm:inline">{therapist.yearsOfExperience} years exp.</span>
+                            <span className="sm:hidden">{therapist.yearsOfExperience}y</span>
                           </div>
-                          <div className="flex items-center">
-                            <Users className="w-3 h-3 mr-1" />
-                            {therapist.sessionType.join(', ')}
-                          </div>
+                          {therapist.distanceText && (
+                            <div className="flex items-center sm:hidden">
+                              <span className="text-blue-400 font-medium text-xs">{therapist.distanceText}</span>
+                            </div>
+                          )}
                         </div>
                         {therapist.duration && (
-                          <div className="text-blue-400 font-medium">
+                          <div className="text-blue-400 font-medium hidden sm:block">
                             {therapist.duration} away
                           </div>
                         )}
@@ -628,11 +630,10 @@ export default function TherapistsNearYouPage() {
             </div>
 
             {/* Map */}
-            <div className="relative">
+            <div className="relative w-full lg:w-3/5 xl:w-2/3 order-1 lg:order-none aspect-video lg:aspect-auto lg:h-full">
               <div 
                 ref={mapRef} 
                 className="w-full h-full rounded-lg shadow-md"
-                style={{ minHeight: '500px' }}
               />
               {isLoading && (
                 <div className="absolute inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center rounded-lg">
@@ -647,9 +648,9 @@ export default function TherapistsNearYouPage() {
 
           {/* Therapist Details Modal/Card */}
           {selectedTherapist && (
-            <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" 
+            <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-2 lg:p-4" 
               style={{ display: selectedTherapist ? 'flex' : 'none' }}>
-              <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-800 border-gray-700 text-white">
+              <Card className="w-full max-w-4xl max-h-[95vh] lg:max-h-[90vh] overflow-y-auto bg-gray-800 border-gray-700 text-white">
                 <div className="flex justify-end p-2">
                   <button 
                     onClick={() => setSelectedTherapist(null)} 
@@ -663,20 +664,20 @@ export default function TherapistsNearYouPage() {
                   </button>
                 </div>
                 
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-4">
+                <CardHeader className="px-4 lg:px-6">
+                  <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                    <div className="flex items-center space-x-3 lg:space-x-4 min-w-0 flex-1">
                       <img 
                         src={selectedTherapist.imageUrl} 
                         alt={selectedTherapist.name}
-                        className="w-16 h-16 rounded-full object-cover"
+                        className="w-12 h-12 lg:w-16 lg:h-16 rounded-full object-cover flex-shrink-0"
                       />
-                      <div>
-                        <CardTitle className="text-xl text-white">{selectedTherapist.name}</CardTitle>
-                        <CardDescription className="text-base mt-1 text-gray-300">
+                      <div className="min-w-0 flex-1">
+                        <CardTitle className="text-lg lg:text-xl text-white">{selectedTherapist.name}</CardTitle>
+                        <CardDescription className="text-sm lg:text-base mt-1 text-gray-300">
                           {selectedTherapist.specialization.join(' • ')}
                         </CardDescription>
-                        <div className="flex items-center space-x-4 mt-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-2 gap-2 sm:gap-0">
                           <div className="flex items-center">
                             <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                             <span className="font-medium ml-1 text-white">{selectedTherapist.rating}</span>
@@ -689,9 +690,9 @@ export default function TherapistsNearYouPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex-shrink-0">
                       {selectedTherapist.distanceText && (
-                        <div className="text-blue-400 font-semibold text-lg">{selectedTherapist.distanceText}</div>
+                        <div className="text-blue-400 font-semibold text-base lg:text-lg">{selectedTherapist.distanceText}</div>
                       )}
                       {selectedTherapist.duration && (
                         <div className="text-gray-400 text-sm">{selectedTherapist.duration} drive</div>
@@ -700,8 +701,8 @@ export default function TherapistsNearYouPage() {
                   </div>
                 </CardHeader>
                 
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <CardContent className="px-4 lg:px-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
                     <div className="space-y-4">
                       <div>
                         <h3 className="font-semibold mb-2 text-white">About</h3>
