@@ -29,3 +29,8 @@ next-env.d.ts
 /.clerk/
 
 .DS_Store
+
+service.json
+hackathons-423418-ca6c603344c4.json
+secrets/
+*.secret.json
