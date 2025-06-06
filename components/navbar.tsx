@@ -32,6 +32,9 @@ export default function Navbar() {
                 Dashboard
               </Link>
             )}
+            <Link href="/therapists-near-you" className="text-gray-300 hover:text-white transition-colors">
+              Find Therapists
+            </Link>
             <Link href="/blogs" className="text-gray-300 hover:text-white transition-colors">
               Blogs
             </Link>
@@ -86,6 +89,13 @@ export default function Navbar() {
                 Dashboard
               </Link>
             )}
+            <Link
+              href="/therapists-near-you"
+              className="block text-gray-300 hover:text-white py-2"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Find Therapists
+            </Link>
             <Link
               href="/blogs"
               className="block text-gray-300 hover:text-white py-2"

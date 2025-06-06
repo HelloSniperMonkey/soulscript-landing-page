@@ -16,6 +16,24 @@ Your project is live at:
 
 **[https://vercel.com/hellosnipermonkeys-projects/v0-soulscript-landing-page](https://vercel.com/hellosnipermonkeys-projects/v0-soulscript-landing-page)**
 
+## Features
+
+### Therapist Finder
+The `/therapists-near-you` page uses Google Places API to find real therapists near the user's location:
+
+- **Real-time Location Detection**: Uses browser geolocation to find user's current position
+- **Google Places Integration**: Searches for mental health professionals using multiple keywords
+- **Dynamic Distance Calculation**: Shows driving distances and times using Google Distance Matrix API
+- **Interactive Map**: Displays therapists on an interactive Google Map with custom markers
+- **Expandable Search**: Users can expand search radius if no therapists are found nearby
+- **Detailed Information**: Shows ratings, reviews, contact info, and specializations
+
+#### Google Maps API Setup
+Make sure your Google Maps API key in the code has the following APIs enabled:
+- Maps JavaScript API
+- Places API
+- Distance Matrix API
+
 ## Build your app
 
 Continue building your app on:
