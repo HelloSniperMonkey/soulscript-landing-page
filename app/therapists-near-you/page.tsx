@@ -58,6 +58,85 @@ export default function TherapistsNearYouPage() {
             featureType: 'poi',
             elementType: 'labels',
             stylers: [{ visibility: 'off' }]
+          },
+          // Dark theme styles
+          { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+          { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+          { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+          {
+            featureType: "administrative.locality",
+            elementType: "labels.text.fill",
+            stylers: [{ color: "#d59563" }]
+          },
+          {
+            featureType: "poi",
+            elementType: "labels.text.fill",
+            stylers: [{ color: "#d59563" }]
+          },
+          {
+            featureType: "poi.park",
+            elementType: "geometry",
+            stylers: [{ color: "#263c3f" }]
+          },
+          {
+            featureType: "poi.park",
+            elementType: "labels.text.fill",
+            stylers: [{ color: "#6b9a76" }]
+          },
+          {
+            featureType: "road",
+            elementType: "geometry",
+            stylers: [{ color: "#38414e" }]
+          },
+          {
+            featureType: "road",
+            elementType: "geometry.stroke",
+            stylers: [{ color: "#212a37" }]
+          },
+          {
+            featureType: "road",
+            elementType: "labels.text.fill",
+            stylers: [{ color: "#9ca5b3" }]
+          },
+          {
+            featureType: "road.highway",
+            elementType: "geometry",
+            stylers: [{ color: "#746855" }]
+          },
+          {
+            featureType: "road.highway",
+            elementType: "geometry.stroke",
+            stylers: [{ color: "#1f2835" }]
+          },
+          {
+            featureType: "road.highway",
+            elementType: "labels.text.fill",
+            stylers: [{ color: "#f3d19c" }]
+          },
+          {
+            featureType: "transit",
+            elementType: "geometry",
+            stylers: [{ color: "#2f3948" }]
+          },
+          {
+            featureType: "transit.station",
+            elementType: "labels.text.fill",
+            stylers: [{ color: "#d59563" }]
+          },
+          {
+            featureType: "water",
+            elementType: "geometry",
+            stylers: [{ color: "#17263c" }]
+          },
+          {
+            featureType: "water",
+            elementType: "labels.text.fill",
+            stylers: [{ color: "#515c6d" }]
+          },
+          {
+            featureType: "water",
+            elementType: "labels.text.stroke",
+            stylers: [{ color: "#17263c" }]
           }
         ]
       })
@@ -182,6 +261,16 @@ export default function TherapistsNearYouPage() {
       return
     }
 
+    const getImage = (photo: any) => {
+      try{
+        const img = photo.getUrl({ maxWidth: 200, maxHeight: 200 })
+        return img
+      } catch (error) {
+        console.error('Error getting image:', error)
+        return 'https://fra.cloud.appwrite.io/v1/storage/buckets/bucketmonumento/files/default_image/view?project=67c678c90000d15ffc15&mode=admin'
+      }
+    }
+
     // Convert places to therapist format and get additional details
     const therapistPromises = places.slice(0, 20).map(async (place: any, index: number) => {
       return new Promise<TherapistWithDistance>((resolve) => {
@@ -200,9 +289,7 @@ export default function TherapistsNearYouPage() {
               reviewCount: details.user_ratings_total || 0,
               yearsOfExperience: Math.floor(Math.random() * 15) + 5, // Estimated
               bio: `Professional mental health services at ${details.name}. Committed to providing quality care and support.`,
-              imageUrl: details.photos && details.photos[0] 
-                ? details.photos[0].getUrl({ maxWidth: 200, maxHeight: 200 })
-                : 'https://fra.cloud.appwrite.io/v1/storage/buckets/bucketmonumento/files/default_image/view?project=67c678c90000d15ffc15&mode=admin',
+              imageUrl: getImage(details.photos && details.photos[0]),
               location: {
                 lat: details.geometry.location.lat(),
                 lng: details.geometry.location.lng(),
@@ -274,7 +361,6 @@ export default function TherapistsNearYouPage() {
         await calculateDistances(therapistsWithDetails, userPos)
       } else {
         setTherapists(therapistsWithDetails)
-        setSelectedTherapist(therapistsWithDetails[0])
         addTherapistMarkers(therapistsWithDetails, mapInstance)
         setIsLoading(false)
       }
@@ -341,12 +427,10 @@ export default function TherapistsNearYouPage() {
         }).sort((a: TherapistWithDistance, b: TherapistWithDistance) => (a.distance || Infinity) - (b.distance || Infinity))
 
         setTherapists(updatedTherapists)
-        setSelectedTherapist(updatedTherapists[0])
         addTherapistMarkers(updatedTherapists, map)
         setIsLoading(false)
       } else {
         setTherapists(therapistList)
-        setSelectedTherapist(therapistList[0])
         addTherapistMarkers(therapistList, map)
         setIsLoading(false)
       }
@@ -424,11 +508,11 @@ export default function TherapistsNearYouPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-50 pt-16">
+      <div className="min-h-screen bg-gray-900 pt-16">
         <div className="container mx-auto px-4 py-8">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Find Therapists Near You</h1>
-            <p className="text-gray-600">
+            <h1 className="text-3xl font-bold text-white mb-2">Find Therapists Near You</h1>
+            <p className="text-gray-300">
               {isLoading 
                 ? 'Searching for therapists near you...'
                 : userLocation 
@@ -444,17 +528,17 @@ export default function TherapistsNearYouPage() {
               {isLoading ? (
                 <div className="flex items-center justify-center h-64">
                   <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                    <p className="text-sm text-gray-600">Searching for therapists...</p>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-2"></div>
+                    <p className="text-sm text-gray-300">Searching for therapists...</p>
                   </div>
                 </div>
               ) : therapists.length === 0 ? (
                 <div className="flex items-center justify-center h-64">
                   <div className="text-center">
-                    <p className="text-gray-600 mb-2">No therapists found in your area.</p>
-                    <p className="text-sm text-gray-500 mb-4">Try expanding your search radius.</p>
+                    <p className="text-gray-300 mb-2">No therapists found in your area.</p>
+                    <p className="text-sm text-gray-400 mb-4">Try expanding your search radius.</p>
                     {userLocation && (
-                      <Button onClick={expandSearch} variant="outline">
+                      <Button onClick={expandSearch} variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-800">
                         Expand Search Area
                       </Button>
                     )}
@@ -464,8 +548,8 @@ export default function TherapistsNearYouPage() {
                 therapists.map((therapist) => (
                 <Card 
                   key={therapist.id} 
-                  className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
-                    selectedTherapist?.id === therapist.id ? 'ring-2 ring-blue-500 shadow-md' : ''
+                  className={`cursor-pointer transition-all duration-200 hover:shadow-md bg-gray-800 border-gray-700 text-white ${
+                    selectedTherapist?.id === therapist.id ? 'ring-2 ring-blue-400 shadow-md' : ''
                   }`}
                   onClick={() => handleTherapistSelect(therapist)}
                 >
@@ -478,17 +562,17 @@ export default function TherapistsNearYouPage() {
                           className="w-12 h-12 rounded-full object-cover"
                         />
                         <div>
-                          <CardTitle className="text-lg">{therapist.name}</CardTitle>
+                          <CardTitle className="text-lg text-white">{therapist.name}</CardTitle>
                           <div className="flex items-center space-x-2 mt-1">
                             <div className="flex items-center">
                               <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                              <span className="text-sm font-medium ml-1">{therapist.rating}</span>
-                              <span className="text-sm text-gray-500 ml-1">({therapist.reviewCount})</span>
+                              <span className="text-sm font-medium ml-1 text-white">{therapist.rating}</span>
+                              <span className="text-sm text-gray-400 ml-1">({therapist.reviewCount})</span>
                             </div>
                             {therapist.distanceText && (
                               <>
-                                <span className="text-gray-300">•</span>
-                                <span className="text-sm text-blue-600 font-medium">{therapist.distanceText}</span>
+                                <span className="text-gray-500">•</span>
+                                <span className="text-sm text-blue-400 font-medium">{therapist.distanceText}</span>
                               </>
                             )}
                           </div>
@@ -507,20 +591,20 @@ export default function TherapistsNearYouPage() {
                     <div className="space-y-3">
                       <div className="flex flex-wrap gap-1">
                         {therapist.specialization.slice(0, 3).map((spec) => (
-                          <Badge key={spec} variant="secondary" className="text-xs">
+                          <Badge key={spec} variant="secondary" className="text-xs bg-gray-700 text-gray-200 border-gray-600">
                             {spec}
                           </Badge>
                         ))}
                         {therapist.specialization.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
                             +{therapist.specialization.length - 3} more
                           </Badge>
                         )}
                       </div>
                       
-                      <p className="text-sm text-gray-600 line-clamp-2">{therapist.bio}</p>
+                      <p className="text-sm text-gray-300 line-clamp-2">{therapist.bio}</p>
                       
-                      <div className="flex items-center justify-between text-xs text-gray-500">
+                      <div className="flex items-center justify-between text-xs text-gray-400">
                         <div className="flex items-center space-x-4">
                           <div className="flex items-center">
                             <Clock className="w-3 h-3 mr-1" />
@@ -532,7 +616,7 @@ export default function TherapistsNearYouPage() {
                           </div>
                         </div>
                         {therapist.duration && (
-                          <div className="text-blue-600 font-medium">
+                          <div className="text-blue-400 font-medium">
                             {therapist.duration} away
                           </div>
                         )}
@@ -551,10 +635,10 @@ export default function TherapistsNearYouPage() {
                 style={{ minHeight: '500px' }}
               />
               {isLoading && (
-                <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg">
+                <div className="absolute inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center rounded-lg">
                   <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                    <p className="text-sm text-gray-600">Loading map and calculating distances...</p>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-2"></div>
+                    <p className="text-sm text-gray-300">Loading map and calculating distances...</p>
                   </div>
                 </div>
               )}
@@ -563,13 +647,13 @@ export default function TherapistsNearYouPage() {
 
           {/* Therapist Details Modal/Card */}
           {selectedTherapist && (
-            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" 
+            <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" 
               style={{ display: selectedTherapist ? 'flex' : 'none' }}>
-              <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+              <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-800 border-gray-700 text-white">
                 <div className="flex justify-end p-2">
                   <button 
                     onClick={() => setSelectedTherapist(null)} 
-                    className="p-1 rounded-full hover:bg-gray-100"
+                    className="p-1 rounded-full hover:bg-gray-700 text-gray-300 hover:text-white"
                     aria-label="Close"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -588,17 +672,17 @@ export default function TherapistsNearYouPage() {
                         className="w-16 h-16 rounded-full object-cover"
                       />
                       <div>
-                        <CardTitle className="text-xl">{selectedTherapist.name}</CardTitle>
-                        <CardDescription className="text-base mt-1">
+                        <CardTitle className="text-xl text-white">{selectedTherapist.name}</CardTitle>
+                        <CardDescription className="text-base mt-1 text-gray-300">
                           {selectedTherapist.specialization.join(' • ')}
                         </CardDescription>
                         <div className="flex items-center space-x-4 mt-2">
                           <div className="flex items-center">
                             <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                            <span className="font-medium ml-1">{selectedTherapist.rating}</span>
-                            <span className="text-gray-500 ml-1">({selectedTherapist.reviewCount} reviews)</span>
+                            <span className="font-medium ml-1 text-white">{selectedTherapist.rating}</span>
+                            <span className="text-gray-400 ml-1">({selectedTherapist.reviewCount} reviews)</span>
                           </div>
-                          <div className="flex items-center text-gray-600">
+                          <div className="flex items-center text-gray-300">
                             <Clock className="w-4 h-4 mr-1" />
                             {selectedTherapist.yearsOfExperience} years experience
                           </div>
@@ -607,10 +691,10 @@ export default function TherapistsNearYouPage() {
                     </div>
                     <div className="text-right">
                       {selectedTherapist.distanceText && (
-                        <div className="text-blue-600 font-semibold text-lg">{selectedTherapist.distanceText}</div>
+                        <div className="text-blue-400 font-semibold text-lg">{selectedTherapist.distanceText}</div>
                       )}
                       {selectedTherapist.duration && (
-                        <div className="text-gray-500 text-sm">{selectedTherapist.duration} drive</div>
+                        <div className="text-gray-400 text-sm">{selectedTherapist.duration} drive</div>
                       )}
                     </div>
                   </div>
@@ -620,22 +704,22 @@ export default function TherapistsNearYouPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                       <div>
-                        <h3 className="font-semibold mb-2">About</h3>
-                        <p className="text-gray-600 text-sm">{selectedTherapist.bio}</p>
+                        <h3 className="font-semibold mb-2 text-white">About</h3>
+                        <p className="text-gray-300 text-sm">{selectedTherapist.bio}</p>
                       </div>
                       
                       <div>
-                        <h3 className="font-semibold mb-2">Education & Certifications</h3>
+                        <h3 className="font-semibold mb-2 text-white">Education & Certifications</h3>
                         <div className="space-y-1">
                           {selectedTherapist.education.map((edu, index) => (
-                            <div key={index} className="flex items-center text-sm">
-                              <CheckCircle className="w-3 h-3 text-green-500 mr-2 flex-shrink-0" />
+                            <div key={index} className="flex items-center text-sm text-gray-300">
+                              <CheckCircle className="w-3 h-3 text-green-400 mr-2 flex-shrink-0" />
                               {edu}
                             </div>
                           ))}
                           {selectedTherapist.certifications.map((cert, index) => (
-                            <div key={index} className="flex items-center text-sm">
-                              <CheckCircle className="w-3 h-3 text-blue-500 mr-2 flex-shrink-0" />
+                            <div key={index} className="flex items-center text-sm text-gray-300">
+                              <CheckCircle className="w-3 h-3 text-blue-400 mr-2 flex-shrink-0" />
                               {cert}
                             </div>
                           ))}
@@ -643,10 +727,10 @@ export default function TherapistsNearYouPage() {
                       </div>
                       
                       <div>
-                        <h3 className="font-semibold mb-2">Languages</h3>
+                        <h3 className="font-semibold mb-2 text-white">Languages</h3>
                         <div className="flex flex-wrap gap-1">
                           {selectedTherapist.languages.map((lang) => (
-                            <Badge key={lang} variant="outline">{lang}</Badge>
+                            <Badge key={lang} variant="outline" className="border-gray-600 text-gray-300">{lang}</Badge>
                           ))}
                         </div>
                       </div>
@@ -654,27 +738,27 @@ export default function TherapistsNearYouPage() {
                     
                     <div className="space-y-4">
                       <div>
-                        <h3 className="font-semibold mb-2">Contact Information</h3>
+                        <h3 className="font-semibold mb-2 text-white">Contact Information</h3>
                         <div className="space-y-2">
-                          <div className="flex items-center text-sm">
-                            <MapPin className="w-4 h-4 mr-2 text-gray-500" />
+                          <div className="flex items-center text-sm text-gray-300">
+                            <MapPin className="w-4 h-4 mr-2 text-gray-400" />
                             {selectedTherapist.location.address}, {selectedTherapist.location.city}, {selectedTherapist.location.state} {selectedTherapist.location.zipCode}
                           </div>
-                          <div className="flex items-center text-sm">
-                            <Phone className="w-4 h-4 mr-2 text-gray-500" />
+                          <div className="flex items-center text-sm text-gray-300">
+                            <Phone className="w-4 h-4 mr-2 text-gray-400" />
                             {selectedTherapist.contact.phone}
                           </div>
-                          <div className="flex items-center text-sm">
-                            <Mail className="w-4 h-4 mr-2 text-gray-500" />
+                          <div className="flex items-center text-sm text-gray-300">
+                            <Mail className="w-4 h-4 mr-2 text-gray-400" />
                             {selectedTherapist.contact.email}
                           </div>
                           {selectedTherapist.contact.website && (
                             <div className="flex items-center text-sm">
-                              <Globe className="w-4 h-4 mr-2 text-gray-500" />
+                              <Globe className="w-4 h-4 mr-2 text-gray-400" />
                               <a href={selectedTherapist.contact.website.startsWith('http') ? selectedTherapist.contact.website : `https://${selectedTherapist.contact.website}`} 
                                 target="_blank" 
                                 rel="noopener noreferrer" 
-                                className="text-blue-600 hover:underline">
+                                className="text-blue-400 hover:underline">
                                 {selectedTherapist.contact.website}
                               </a>
                             </div>
@@ -683,26 +767,26 @@ export default function TherapistsNearYouPage() {
                       </div>
                       
                       <div>
-                        <h3 className="font-semibold mb-2">Session Information</h3>
+                        <h3 className="font-semibold mb-2 text-white">Session Information</h3>
                         <div className="space-y-2 text-sm">
                           {selectedTherapist.fees?.consultationFee && (
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between text-gray-300">
                               <span>Consultation Fee:</span>
-                              <span className="font-medium">${selectedTherapist.fees.consultationFee}</span>
+                              <span className="font-medium text-green-400">${selectedTherapist.fees.consultationFee}</span>
                             </div>
                           )}
                           {selectedTherapist.fees?.sessionFee && (
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between text-gray-300">
                               <span>Session Fee:</span>
-                              <span className="font-medium">${selectedTherapist.fees.sessionFee}</span>
+                              <span className="font-medium text-green-400">${selectedTherapist.fees.sessionFee}</span>
                             </div>
                           )}
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center justify-between text-gray-300">
                             <span>Session Types:</span>
                             <span>{selectedTherapist.sessionType.join(', ')}</span>
                           </div>
                           {!selectedTherapist.fees?.consultationFee && !selectedTherapist.fees?.sessionFee && (
-                            <div className="text-gray-500 italic">
+                            <div className="text-gray-400 italic">
                               Contact therapist for pricing information
                             </div>
                           )}
@@ -710,19 +794,19 @@ export default function TherapistsNearYouPage() {
                       </div>
                       
                       <div>
-                        <h3 className="font-semibold mb-2">Availability</h3>
-                        <div className="text-sm">
+                        <h3 className="font-semibold mb-2 text-white">Availability</h3>
+                        <div className="text-sm text-gray-300">
                           <div className="mb-1">
-                            <span className="font-medium">Days:</span> {selectedTherapist.availability.days.join(', ')}
+                            <span className="font-medium text-white">Days:</span> {selectedTherapist.availability.days.join(', ')}
                           </div>
                           <div>
-                            <span className="font-medium">Time Slots:</span> {selectedTherapist.availability.timeSlots.join(', ')}
+                            <span className="font-medium text-white">Time Slots:</span> {selectedTherapist.availability.timeSlots.join(', ')}
                           </div>
                         </div>
                       </div>
                       
                       <div className="pt-2">
-                        <Button className="w-full">
+                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
                           Book Consultation
                         </Button>
                       </div>
