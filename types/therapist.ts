@@ -25,9 +25,9 @@ export interface Therapist {
     timeSlots: string[]
   }
   sessionType: ('in-person' | 'online' | 'both')[]
-  fees: {
-    consultationFee: number
-    sessionFee: number
+  fees?: {
+    consultationFee?: number
+    sessionFee?: number
     currency: string
   }
   languages: string[]

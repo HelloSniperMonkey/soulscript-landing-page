@@ -202,7 +202,7 @@ export default function TherapistsNearYouPage() {
               bio: `Professional mental health services at ${details.name}. Committed to providing quality care and support.`,
               imageUrl: details.photos && details.photos[0] 
                 ? details.photos[0].getUrl({ maxWidth: 200, maxHeight: 200 })
-                : '/placeholder-user.jpg',
+                : 'https://fra.cloud.appwrite.io/v1/storage/buckets/bucketmonumento/files/default_image/view?project=67c678c90000d15ffc15&mode=admin',
               location: {
                 lat: details.geometry.location.lat(),
                 lng: details.geometry.location.lng(),
@@ -223,11 +223,6 @@ export default function TherapistsNearYouPage() {
                 timeSlots: ['9:00 AM', '11:00 AM', '2:00 PM', '4:00 PM']
               },
               sessionType: ['in-person'],
-              fees: {
-                consultationFee: 100 + Math.floor(Math.random() * 50),
-                sessionFee: 120 + Math.floor(Math.random() * 80),
-                currency: 'USD'
-              },
               languages: ['English'],
               education: ['Licensed Mental Health Professional'],
               certifications: ['State Licensed']
@@ -243,7 +238,7 @@ export default function TherapistsNearYouPage() {
               reviewCount: place.user_ratings_total || 0,
               yearsOfExperience: Math.floor(Math.random() * 15) + 5,
               bio: `Professional mental health services at ${place.name}.`,
-              imageUrl: '/placeholder-user.jpg',
+              imageUrl: 'https://fra.cloud.appwrite.io/v1/storage/buckets/bucketmonumento/files/default_image/view?project=67c678c90000d15ffc15&mode=admin',
               location: {
                 lat: place.geometry.location.lat(),
                 lng: place.geometry.location.lng(),
@@ -261,11 +256,6 @@ export default function TherapistsNearYouPage() {
                 timeSlots: ['9:00 AM', '11:00 AM', '2:00 PM', '4:00 PM']
               },
               sessionType: ['in-person'],
-              fees: {
-                consultationFee: 100,
-                sessionFee: 150,
-                currency: 'USD'
-              },
               languages: ['English'],
               education: ['Licensed Mental Health Professional'],
               certifications: ['State Licensed']
@@ -504,10 +494,12 @@ export default function TherapistsNearYouPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-green-600">${therapist.fees.sessionFee}</div>
-                        <div className="text-xs text-gray-500">per session</div>
-                      </div>
+                      {therapist.fees?.sessionFee && (
+                        <div className="text-right">
+                          <div className="text-lg font-bold text-green-600">${therapist.fees.sessionFee}</div>
+                          <div className="text-xs text-gray-500">per session</div>
+                        </div>
+                      )}
                     </div>
                   </CardHeader>
                   
@@ -571,146 +563,174 @@ export default function TherapistsNearYouPage() {
 
           {/* Therapist Details Modal/Card */}
           {selectedTherapist && (
-            <Card className="mt-6">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-4">
-                    <img 
-                      src={selectedTherapist.imageUrl} 
-                      alt={selectedTherapist.name}
-                      className="w-16 h-16 rounded-full object-cover"
-                    />
-                    <div>
-                      <CardTitle className="text-xl">{selectedTherapist.name}</CardTitle>
-                      <CardDescription className="text-base mt-1">
-                        {selectedTherapist.specialization.join(' • ')}
-                      </CardDescription>
-                      <div className="flex items-center space-x-4 mt-2">
-                        <div className="flex items-center">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span className="font-medium ml-1">{selectedTherapist.rating}</span>
-                          <span className="text-gray-500 ml-1">({selectedTherapist.reviewCount} reviews)</span>
-                        </div>
-                        <div className="flex items-center text-gray-600">
-                          <Clock className="w-4 h-4 mr-1" />
-                          {selectedTherapist.yearsOfExperience} years experience
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    {selectedTherapist.distanceText && (
-                      <div className="text-blue-600 font-semibold text-lg">{selectedTherapist.distanceText}</div>
-                    )}
-                    {selectedTherapist.duration && (
-                      <div className="text-gray-500 text-sm">{selectedTherapist.duration} drive</div>
-                    )}
-                  </div>
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" 
+              style={{ display: selectedTherapist ? 'flex' : 'none' }}>
+              <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-end p-2">
+                  <button 
+                    onClick={() => setSelectedTherapist(null)} 
+                    className="p-1 rounded-full hover:bg-gray-100"
+                    aria-label="Close"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
                 </div>
-              </CardHeader>
-              
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="font-semibold mb-2">About</h3>
-                      <p className="text-gray-600 text-sm">{selectedTherapist.bio}</p>
-                    </div>
-                    
-                    <div>
-                      <h3 className="font-semibold mb-2">Education & Certifications</h3>
-                      <div className="space-y-1">
-                        {selectedTherapist.education.map((edu, index) => (
-                          <div key={index} className="flex items-center text-sm">
-                            <CheckCircle className="w-3 h-3 text-green-500 mr-2 flex-shrink-0" />
-                            {edu}
+                
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-4">
+                      <img 
+                        src={selectedTherapist.imageUrl} 
+                        alt={selectedTherapist.name}
+                        className="w-16 h-16 rounded-full object-cover"
+                      />
+                      <div>
+                        <CardTitle className="text-xl">{selectedTherapist.name}</CardTitle>
+                        <CardDescription className="text-base mt-1">
+                          {selectedTherapist.specialization.join(' • ')}
+                        </CardDescription>
+                        <div className="flex items-center space-x-4 mt-2">
+                          <div className="flex items-center">
+                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                            <span className="font-medium ml-1">{selectedTherapist.rating}</span>
+                            <span className="text-gray-500 ml-1">({selectedTherapist.reviewCount} reviews)</span>
                           </div>
-                        ))}
-                        {selectedTherapist.certifications.map((cert, index) => (
-                          <div key={index} className="flex items-center text-sm">
-                            <CheckCircle className="w-3 h-3 text-blue-500 mr-2 flex-shrink-0" />
-                            {cert}
+                          <div className="flex items-center text-gray-600">
+                            <Clock className="w-4 h-4 mr-1" />
+                            {selectedTherapist.yearsOfExperience} years experience
                           </div>
-                        ))}
+                        </div>
                       </div>
                     </div>
-                    
-                    <div>
-                      <h3 className="font-semibold mb-2">Languages</h3>
-                      <div className="flex flex-wrap gap-1">
-                        {selectedTherapist.languages.map((lang) => (
-                          <Badge key={lang} variant="outline">{lang}</Badge>
-                        ))}
-                      </div>
+                    <div className="text-right">
+                      {selectedTherapist.distanceText && (
+                        <div className="text-blue-600 font-semibold text-lg">{selectedTherapist.distanceText}</div>
+                      )}
+                      {selectedTherapist.duration && (
+                        <div className="text-gray-500 text-sm">{selectedTherapist.duration} drive</div>
+                      )}
                     </div>
                   </div>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="font-semibold mb-2">Contact Information</h3>
-                      <div className="space-y-2">
-                        <div className="flex items-center text-sm">
-                          <MapPin className="w-4 h-4 mr-2 text-gray-500" />
-                          {selectedTherapist.location.address}, {selectedTherapist.location.city}, {selectedTherapist.location.state} {selectedTherapist.location.zipCode}
+                </CardHeader>
+                
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="font-semibold mb-2">About</h3>
+                        <p className="text-gray-600 text-sm">{selectedTherapist.bio}</p>
+                      </div>
+                      
+                      <div>
+                        <h3 className="font-semibold mb-2">Education & Certifications</h3>
+                        <div className="space-y-1">
+                          {selectedTherapist.education.map((edu, index) => (
+                            <div key={index} className="flex items-center text-sm">
+                              <CheckCircle className="w-3 h-3 text-green-500 mr-2 flex-shrink-0" />
+                              {edu}
+                            </div>
+                          ))}
+                          {selectedTherapist.certifications.map((cert, index) => (
+                            <div key={index} className="flex items-center text-sm">
+                              <CheckCircle className="w-3 h-3 text-blue-500 mr-2 flex-shrink-0" />
+                              {cert}
+                            </div>
+                          ))}
                         </div>
-                        <div className="flex items-center text-sm">
-                          <Phone className="w-4 h-4 mr-2 text-gray-500" />
-                          {selectedTherapist.contact.phone}
+                      </div>
+                      
+                      <div>
+                        <h3 className="font-semibold mb-2">Languages</h3>
+                        <div className="flex flex-wrap gap-1">
+                          {selectedTherapist.languages.map((lang) => (
+                            <Badge key={lang} variant="outline">{lang}</Badge>
+                          ))}
                         </div>
-                        <div className="flex items-center text-sm">
-                          <Mail className="w-4 h-4 mr-2 text-gray-500" />
-                          {selectedTherapist.contact.email}
-                        </div>
-                        {selectedTherapist.contact.website && (
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="font-semibold mb-2">Contact Information</h3>
+                        <div className="space-y-2">
                           <div className="flex items-center text-sm">
-                            <Globe className="w-4 h-4 mr-2 text-gray-500" />
-                            <a href={`https://${selectedTherapist.contact.website}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                              {selectedTherapist.contact.website}
-                            </a>
+                            <MapPin className="w-4 h-4 mr-2 text-gray-500" />
+                            {selectedTherapist.location.address}, {selectedTherapist.location.city}, {selectedTherapist.location.state} {selectedTherapist.location.zipCode}
                           </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h3 className="font-semibold mb-2">Session Information</h3>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center justify-between">
-                          <span>Consultation Fee:</span>
-                          <span className="font-medium">${selectedTherapist.fees.consultationFee}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>Session Fee:</span>
-                          <span className="font-medium">${selectedTherapist.fees.sessionFee}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>Session Types:</span>
-                          <span>{selectedTherapist.sessionType.join(', ')}</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h3 className="font-semibold mb-2">Availability</h3>
-                      <div className="text-sm">
-                        <div className="mb-1">
-                          <span className="font-medium">Days:</span> {selectedTherapist.availability.days.join(', ')}
-                        </div>
-                        <div>
-                          <span className="font-medium">Time Slots:</span> {selectedTherapist.availability.timeSlots.join(', ')}
+                          <div className="flex items-center text-sm">
+                            <Phone className="w-4 h-4 mr-2 text-gray-500" />
+                            {selectedTherapist.contact.phone}
+                          </div>
+                          <div className="flex items-center text-sm">
+                            <Mail className="w-4 h-4 mr-2 text-gray-500" />
+                            {selectedTherapist.contact.email}
+                          </div>
+                          {selectedTherapist.contact.website && (
+                            <div className="flex items-center text-sm">
+                              <Globe className="w-4 h-4 mr-2 text-gray-500" />
+                              <a href={selectedTherapist.contact.website.startsWith('http') ? selectedTherapist.contact.website : `https://${selectedTherapist.contact.website}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="text-blue-600 hover:underline">
+                                {selectedTherapist.contact.website}
+                              </a>
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="pt-2">
-                      <Button className="w-full">
-                        Book Consultation
-                      </Button>
+                      
+                      <div>
+                        <h3 className="font-semibold mb-2">Session Information</h3>
+                        <div className="space-y-2 text-sm">
+                          {selectedTherapist.fees?.consultationFee && (
+                            <div className="flex items-center justify-between">
+                              <span>Consultation Fee:</span>
+                              <span className="font-medium">${selectedTherapist.fees.consultationFee}</span>
+                            </div>
+                          )}
+                          {selectedTherapist.fees?.sessionFee && (
+                            <div className="flex items-center justify-between">
+                              <span>Session Fee:</span>
+                              <span className="font-medium">${selectedTherapist.fees.sessionFee}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center justify-between">
+                            <span>Session Types:</span>
+                            <span>{selectedTherapist.sessionType.join(', ')}</span>
+                          </div>
+                          {!selectedTherapist.fees?.consultationFee && !selectedTherapist.fees?.sessionFee && (
+                            <div className="text-gray-500 italic">
+                              Contact therapist for pricing information
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h3 className="font-semibold mb-2">Availability</h3>
+                        <div className="text-sm">
+                          <div className="mb-1">
+                            <span className="font-medium">Days:</span> {selectedTherapist.availability.days.join(', ')}
+                          </div>
+                          <div>
+                            <span className="font-medium">Time Slots:</span> {selectedTherapist.availability.timeSlots.join(', ')}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="pt-2">
+                        <Button className="w-full">
+                          Book Consultation
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           )}
         </div>
       </div>

@@ -9,7 +9,7 @@ export const therapistsData: Therapist[] = [
     reviewCount: 127,
     yearsOfExperience: 12,
     bio: "Dr. Sarah Johnson is a licensed clinical psychologist with over 12 years of experience helping individuals overcome anxiety and depression. She specializes in Cognitive Behavioral Therapy and has helped hundreds of clients achieve their mental health goals.",
-    imageUrl: "/placeholder-user.jpg",
+    imageUrl: "https://fra.cloud.appwrite.io/v1/storage/buckets/bucketmonumento/files/default_image/view?project=67c678c90000d15ffc15&mode=admin",
     location: {
       lat: 40.7831,
       lng: -73.9712,
@@ -45,7 +45,7 @@ export const therapistsData: Therapist[] = [
     reviewCount: 89,
     yearsOfExperience: 8,
     bio: "Dr. Michael Chen specializes in trauma therapy and PTSD treatment. He uses evidence-based approaches including EMDR and mindfulness-based interventions to help clients heal from traumatic experiences.",
-    imageUrl: "/placeholder-user.jpg",
+    imageUrl: "https://fra.cloud.appwrite.io/v1/storage/buckets/bucketmonumento/files/default_image/view?project=67c678c90000d15ffc15&mode=admin",
     location: {
       lat: 40.7505,
       lng: -73.9934,
@@ -80,7 +80,7 @@ export const therapistsData: Therapist[] = [
     reviewCount: 156,
     yearsOfExperience: 15,
     bio: "Dr. Emily Rodriguez is a family therapist with extensive experience in couples counseling and child psychology. She helps families navigate challenges and build stronger relationships through evidence-based therapeutic approaches.",
-    imageUrl: "/placeholder-user.jpg",
+    imageUrl: "https://fra.cloud.appwrite.io/v1/storage/buckets/bucketmonumento/files/default_image/view?project=67c678c90000d15ffc15&mode=admin",
     location: {
       lat: 40.7282,
       lng: -73.7949,
@@ -116,7 +116,7 @@ export const therapistsData: Therapist[] = [
     reviewCount: 203,
     yearsOfExperience: 20,
     bio: "Dr. James Wilson has over 20 years of experience in addiction counseling and substance abuse treatment. He leads both individual and group therapy sessions, helping clients on their journey to recovery.",
-    imageUrl: "/placeholder-user.jpg",
+    imageUrl: "https://fra.cloud.appwrite.io/v1/storage/buckets/bucketmonumento/files/default_image/view?project=67c678c90000d15ffc15&mode=admin",
     location: {
       lat: 40.6782,
       lng: -73.9442,
