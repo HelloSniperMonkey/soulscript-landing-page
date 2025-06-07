@@ -3,8 +3,9 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 
-from data import data_chat_extraction, analyze_journal_entries
-from conv import extract_information_gemini, generate_rag, extract_graph_info
+from chat import reflection_chatbot
+from dataSync import isPersonaUpdateNeeded, personaInfo, updatePersona
+import json
 
 app = FastAPI()
 
@@ -13,7 +14,7 @@ origins = [
     "https://localhost.tiangolo.com",
     "http://localhost",
     "http://localhost:8080",
-    "http://localhost:3000",
+    "http://localhost:3001",
 ]
 
 app.add_middleware(
@@ -32,20 +33,44 @@ async def get_report(request: Request):
 
         if not authId:
             return JSONResponse(content={"error": "Missing authId in request"}, status_code=400)
-
-        # Step 1: Extract chat + journal data using authId
-        chat_data = data_chat_extraction(authId, "json")
-        journal_json = analyze_journal_entries(authId)
-
-        # Step 2: Generate combined RAG result
-        rag_result = generate_rag(chat_data=chat_data, journal_analysis=journal_json)
-
-        # Step 3: Extract info + graph in parallel
-        info_task = asyncio.to_thread(extract_information_gemini, rag_result)
-        graph_task = asyncio.to_thread(extract_graph_info, rag_result)
-        info_json, graph_json = await asyncio.gather(info_task, graph_task)
+        if(isPersonaUpdateNeeded(authId)):
+            info_json, graph_json = await updatePersona(authId)
+        else:
+            user_info = personaInfo(authId)
+            if user_info:
+                user_info_json = json.loads(user_info)
+                info_json, graph_json = user_info_json.get("Info"), user_info_json.get("Graph")
+            else:
+                # Handle the case where user_info is None or empty
+                return JSONResponse(content={"error": "User information not found or is empty"}, status_code=404)
 
         return JSONResponse(content={"info": info_json, "graph": graph_json}, status_code=200)
+
+    except Exception as e:
+        return JSONResponse(content={"error": f"Internal server error: {str(e)}"}, status_code=500)
+
+@app.post("/chat")
+async def chat(request: Request):
+    try:
+        payload = await request.json()
+        authId = payload.get("authId")
+        user_message = payload.get("userMessage")
+        user_info = personaInfo(authId)
+
+        if not authId or not user_message:
+            return JSONResponse(content={"error": "Missing authId or userMessage in request"}, status_code=400)
+
+        if not isPersonaUpdateNeeded(authId) or not user_info is None:
+            # Generate RAG response
+            rag_response = reflection_chatbot(user_message=user_message, user_info=user_info)
+        else:
+            # Update persona and then generate RAG response
+            updatePersona(authId, user_message)
+            rag_response = reflection_chatbot(user_message=user_message, user_info=user_info)
+        if not rag_response:
+            return JSONResponse(content={"error": "No response generated"}, status_code=404)
+
+        return JSONResponse(content={"response": rag_response}, status_code=200)
 
     except Exception as e:
         return JSONResponse(content={"error": f"Internal server error: {str(e)}"}, status_code=500)
