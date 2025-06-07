@@ -8,10 +8,11 @@ import os
 import json
 from tempfile import NamedTemporaryFile
 
-from data import data_chat_extraction, analyze_journal_entries,gen_mindlogpdf
+from data import data_chat_extraction, analyze_journal_entries,gen_mindlogpdf,json_to_md,save_to_pdf
 from conv import extract_information_gemini, generate_rag, extract_graph_info
 from mail import create_pdf_from_json, sendEmail  # You need to define this
 
+from data import create_pdf_from_json_chat
 from chat import reflection_chatbot
 from dataSync import isPersonaUpdateNeeded, personaInfo, updatePersona
 import json
@@ -47,6 +48,26 @@ async def get_report(request: Request):
         # If update is needed → update and return, skip further processing
         if isPersonaUpdateNeeded(authId):
             info_json, graph_json = await updatePersona(authId)
+            # Step: Generate PDF report from saved persona data
+            data = {
+                "info": info_json,
+                "graph": graph_json
+            }
+
+            with NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+                pdf_path = tmp.name
+                create_pdf_from_json(data, pdf_path)
+
+            # Step: Send Email with PDF
+            sendEmail(
+                Name="SoulScript System",
+                To=user_email,
+                subject="Your Therapy Assessment Report",
+                message="Attached is your report. Please review the PDF for detailed insights.",
+                attachment_path=pdf_path
+            )
+
+            os.remove(pdf_path)
             return JSONResponse(content={
                 "info": info_json,
                 "graph": graph_json,
@@ -161,6 +182,43 @@ async def get_report(request: Request):
 
 
         return JSONResponse(content={"message": "Email Sent"}, status_code=200)
+
+    except Exception as e:
+        return JSONResponse(content={"error": f"Internal server error: {str(e)}"}, status_code=500)
+
+
+@app.post("/getChatSummary")
+async def get_report(request: Request):
+    try:
+        payload = await request.json()
+        authId = payload.get("authId")
+        user_email = payload.get("email")
+
+        # Step 1: Extract chat + journal data using authId
+        chat_data = data_chat_extraction(authId, "json")
+        md_data = json_to_md(chat_data)
+        # Step: Generate PDF report from saved persona data
+        
+
+        with NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+            pdf_path = tmp.name
+            save_to_pdf(md_data, pdf_path)
+
+        # Step: Send Email with PDF
+        sendEmail(
+            Name="SoulScript System",
+            To=user_email,
+            subject="Your Therapy Assessment Report",
+            message="Attached is your report. Please review the PDF for detailed insights.",
+            attachment_path=pdf_path
+        )
+
+        
+
+        return JSONResponse(content={
+            
+            "status": "Email sent using previously saved persona info."
+        }, status_code=200)
 
     except Exception as e:
         return JSONResponse(content={"error": f"Internal server error: {str(e)}"}, status_code=500)

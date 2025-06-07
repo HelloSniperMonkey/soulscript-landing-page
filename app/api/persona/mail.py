@@ -7,13 +7,16 @@ from reportlab.platypus import Paragraph
 from reportlab.lib.enums import TA_LEFT
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.graphics import renderPDF
+from reportlab.graphics.shapes import Drawing
+from reportlab.graphics.renderPDF import drawToFile
+from reportlab.graphics.shapes import Rect, String, Group
+from reportlab.lib.colors import HexColor
 
 import textwrap
 import json
 from datetime import datetime
-
 from email.mime.application import MIMEApplication
-
 from dotenv import load_dotenv
 import requests
 from bs4 import BeautifulSoup
@@ -29,8 +32,71 @@ import os
 
 load_dotenv()
 
+# Logo configuration - You can set this to your actual SVG content
+LOGO_SVG_CONTENT = """
+<svg width="150" height="30" viewBox="0 0 150 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="150" height="30" rx="5" fill="#7B19D8"/>
+    <text x="75" y="20" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">SoulScript</text>
+</svg>
+"""
+
 def split_text(text, max_chars=100):
     return textwrap.wrap(text, width=max_chars)
+
+def draw_logo(c, x, y, width=150, height=30):
+    """Draw logo at specified position with improved implementation"""
+    try:
+        # Check if we have actual SVG content (not empty or placeholder)
+        if LOGO_SVG_CONTENT and LOGO_SVG_CONTENT.strip() and not LOGO_SVG_CONTENT.strip().startswith('<!--'):
+            # For now, we'll create a styled text logo since SVG rendering is complex
+            # You can implement proper SVG parsing later if needed
+            draw_styled_text_logo(c, x, y, width, height)
+        else:
+            # Fallback to simple styled logo
+            draw_simple_logo(c, x, y, width, height)
+    except Exception as e:
+        print(f"Logo drawing error: {e}")
+        # Fallback to simple logo if anything goes wrong
+        draw_simple_logo(c, x, y, width, height)
+
+def draw_styled_text_logo(c, x, y, width, height):
+    """Draw a styled text-based logo"""
+    # Background with rounded corners effect
+    c.setFillColor(colors.HexColor('#7B19D8'))
+    c.roundRect(x, y, width, height, 5, fill=1, stroke=0)
+    
+    # Add gradient effect with lighter overlay
+    c.setFillColor(colors.HexColor('#9B39F8'))
+    c.roundRect(x, y + height/2, width, height/2, 5, fill=1, stroke=0)
+    
+    # Border
+    c.setStrokeColor(colors.HexColor('#5A0FB8'))
+    c.setLineWidth(1)
+    c.roundRect(x, y, width, height, 5, fill=0, stroke=1)
+    
+    # Logo text
+    c.setFillColor(colors.white)
+    c.setFont("Helvetica-Bold", 12)
+    text = "SoulScript"
+    text_width = c.stringWidth(text, "Helvetica-Bold", 12)
+    text_x = x + (width - text_width) / 2
+    text_y = y + (height - 12) / 2 + 3
+    c.drawString(text_x, text_y, text)
+
+def draw_simple_logo(c, x, y, width, height):
+    """Simple fallback logo"""
+    # Background
+    c.setFillColor(colors.HexColor('#7B19D8'))
+    c.rect(x, y, width, height, fill=1, stroke=0)
+    
+    # Text
+    c.setFillColor(colors.white)
+    c.setFont("Helvetica-Bold", 10)
+    text = "SoulScript"
+    text_width = c.stringWidth(text, "Helvetica-Bold", 10)
+    text_x = x + (width - text_width) / 2
+    text_y = y + (height - 10) / 2 + 2
+    c.drawString(text_x, text_y, text)
 
 def draw_wrapped_text(c, x, y, text, font="Helvetica", font_size=10, line_height=14):
     c.setFont(font, font_size)
@@ -75,18 +141,21 @@ def draw_enhanced_wrapped_text(c, x, y, text, font="Helvetica", font_size=10, li
     return y
 
 def draw_page_header(c):
-    """Draw header on each page"""
+    """Draw header on each page with logo"""
     width, height = letter
     margin = 50
     
     # Header background
     c.setFillColor(colors.HexColor('#2C3E50'))
-    c.rect(0, height - 60, width, 60, fill=1, stroke=0)
+    c.rect(0, height - 70, width, 70, fill=1, stroke=0)
+    
+    # Draw logo
+    draw_logo(c, margin, height - 65, width=120, height=25)
     
     # Header text
     c.setFillColor(colors.white)
     c.setFont("Helvetica-Bold", 12)
-    c.drawString(margin, height - 35, "🧠 SoulScript Therapy Assessment Report")
+    c.drawString(margin + 140, height - 40, "SoulScript Therapy Assessment Report")
     
     # Date
     c.setFont("Helvetica", 9)
@@ -94,11 +163,14 @@ def draw_page_header(c):
     
     # Confidentiality notice
     c.setFont("Helvetica-Oblique", 8)
-    c.drawString(margin, height - 50, "CONFIDENTIAL - For Therapeutic Use Only")
+    c.drawString(margin, height - 55, "CONFIDENTIAL - For Therapeutic Use Only")
 
 def draw_section_header(c, x, y, text, width):
-    """Draw an enhanced section header with styling"""
-    header_height = 25
+    """Draw an enhanced section header with styling and proper spacing"""
+    header_height = 30
+    
+    # Add space before header
+    y -= 20
     
     # Background gradient effect (simulated with rectangles)
     c.setFillColor(colors.HexColor('#34495E'))
@@ -112,20 +184,29 @@ def draw_section_header(c, x, y, text, width):
     # Text
     c.setFillColor(colors.white)
     c.setFont("Helvetica-Bold", 14)
-    c.drawString(x, y + 5, text)
+    c.drawString(x, y + 8, text)
     
-    return y - 35
+    # Add space after header
+    return y - 45
 
 def draw_subsection_header(c, x, y, text):
-    """Draw a subsection header"""
+    """Draw a subsection header with proper spacing"""
+    # Add space before subsection header
+    y -= 15
+    
     c.setFillColor(colors.HexColor('#3498DB'))
     c.setFont("Helvetica-Bold", 11)
     c.drawString(x, y, f"▶ {text}")
-    return y - 20
+    
+    # Add space after subsection header
+    return y - 25
 
 def draw_metric_box(c, x, y, name, score, width=200):
     """Draw a styled metric box with score visualization"""
-    box_height = 30
+    box_height = 35
+    
+    # Add space before metric box
+    y -= 10
     
     # Determine color based on score
     if score >= 7:
@@ -153,66 +234,74 @@ def draw_metric_box(c, x, y, name, score, width=200):
     # Draw text
     c.setFillColor(text_color)
     c.setFont("Helvetica-Bold", 10)
-    c.drawString(x + 10, y - 10, name)
-    c.drawRightString(x + width - 10, y - 10, f"{score}/10 ({status})")
+    c.drawString(x + 10, y - 15, name)
+    c.drawRightString(x + width - 10, y - 15, f"{score}/10 ({status})")
     
-    return y - box_height - 5
+    # Add space after metric box
+    return y - box_height - 15
 
 def create_pdf_from_json(json_data, filename):
-    """Enhanced PDF creation with improved styling and layout"""
+    """Enhanced PDF creation with improved styling, layout, and fixed logo"""
     c = canvas.Canvas(filename, pagesize=letter)
     width, height = letter
     margin = 50
     y = height - margin
     
-    # Enhanced Title Page
+    # Enhanced Title Page with Logo
     c.setFillColor(colors.HexColor('#2C3E50'))
-    c.rect(0, height - 150, width, 150, fill=1, stroke=0)
+    c.rect(0, height - 180, width, 180, fill=1, stroke=0)
+    
+    # Draw main logo (larger version)
+    logo_width = 200
+    logo_height = 50
+    logo_x = (width - logo_width) / 2
+    logo_y = height - 100
+    draw_logo(c, logo_x, logo_y, logo_width, logo_height)
     
     # Main title
     c.setFillColor(colors.white)
     c.setFont("Helvetica-Bold", 24)
-    title_text = "🧠 THERAPY ASSESSMENT REPORT"
+    title_text = "THERAPY ASSESSMENT REPORT"
     text_width = c.stringWidth(title_text, "Helvetica-Bold", 24)
-    c.drawString((width - text_width) / 2, height - 80, title_text)
+    c.drawString((width - text_width) / 2, height - 125, title_text)
     
     # Subtitle
     c.setFont("Helvetica", 14)
     subtitle = "Comprehensive Psychological Analysis"
     subtitle_width = c.stringWidth(subtitle, "Helvetica", 14)
-    c.drawString((width - subtitle_width) / 2, height - 110, subtitle)
+    c.drawString((width - subtitle_width) / 2, height - 145, subtitle)
     
     # System info
     c.setFont("Helvetica-Oblique", 10)
     system_info = f"Generated by SoulScript System | {datetime.now().strftime('%B %d, %Y')}"
     system_width = c.stringWidth(system_info, "Helvetica-Oblique", 10)
-    c.drawString((width - system_width) / 2, height - 135, system_info)
+    c.drawString((width - system_width) / 2, height - 165, system_info)
     
-    y = height - 200
+    y = height - 220
     
-    # Important notice box
-    notice_y = y - 50
+    # Important notice box with proper spacing
+    notice_y = y - 30
     c.setFillColor(colors.HexColor('#E8F4FD'))
-    c.roundRect(margin, notice_y - 40, width - 2 * margin, 70, 10, fill=1, stroke=1)
+    c.roundRect(margin, notice_y - 50, width - 2 * margin, 80, 10, fill=1, stroke=1)
     
     c.setFillColor(colors.HexColor('#2980B9'))
     c.setFont("Helvetica-Bold", 11)
-    c.drawString(margin + 20, notice_y - 5, "⚠️ CONFIDENTIALITY NOTICE")
+    c.drawString(margin + 20, notice_y - 10, "CONFIDENTIALITY NOTICE")
     
     c.setFillColor(colors.black)
     c.setFont("Helvetica", 9)
     notice_text = "This report contains sensitive psychological information intended solely for therapeutic purposes."
-    y = draw_enhanced_wrapped_text(c, margin + 20, notice_y - 25, notice_text, max_chars=80)
+    y = draw_enhanced_wrapped_text(c, margin + 20, notice_y - 30, notice_text, max_chars=80)
     
-    y = notice_y - 80
+    y = notice_y - 100
     
     # Priority sections mapping
     priority_sections = {
-        'behavioralPatterns': ('🧭 BEHAVIORAL PATTERNS', 1),
-        'riskAssessment': ('⚠️ RISK ASSESSMENT', 2),
-        'psychologicalFormulation': ('🧩 PSYCHOLOGICAL FORMULATION', 3),
-        'strengthsAndResources': ('💪 STRENGTHS & RESOURCES', 4),
-        'therapyRecommendations': ('🎯 THERAPY RECOMMENDATIONS', 5)
+        'behavioralPatterns': ('BEHAVIORAL PATTERNS', 1),
+        'riskAssessment': ('RISK ASSESSMENT', 2),
+        'psychologicalFormulation': ('PSYCHOLOGICAL FORMULATION', 3),
+        'strengthsAndResources': ('STRENGTHS & RESOURCES', 4),
+        'therapyRecommendations': ('THERAPY RECOMMENDATIONS', 5)
     }
     
     # Get info sections
@@ -246,12 +335,12 @@ def create_pdf_from_json(json_data, filename):
             continue
         
         # Start new page for major sections
-        if y < 200:
+        if y < 250:
             c.showPage()
             draw_page_header(c)
-            y = height - 120
+            y = height - 140
         
-        # Draw section header
+        # Draw section header with proper spacing
         y = draw_section_header(c, margin, y, section_title, width)
         
         # Group items by label for better organization
@@ -266,10 +355,10 @@ def create_pdf_from_json(json_data, filename):
         
         # Render grouped content
         for label, values in grouped_items.items():
-            if y < 120:
+            if y < 150:
                 c.showPage()
                 draw_page_header(c)
-                y = height - 120
+                y = height - 140
             
             # Subsection header with special styling for important sections
             if section_key == 'riskAssessment':
@@ -282,12 +371,12 @@ def create_pdf_from_json(json_data, filename):
             else:
                 y = draw_subsection_header(c, margin, y, label)
             
-            # Content
+            # Content with proper spacing
             for value in values:
-                if y < 100:
+                if y < 120:
                     c.showPage()
                     draw_page_header(c)
-                    y = height - 120
+                    y = height - 140
                 
                 # Choose color based on content type
                 text_color = colors.black
@@ -298,20 +387,20 @@ def create_pdf_from_json(json_data, filename):
                 
                 y = draw_enhanced_wrapped_text(c, margin + 20, y, f"• {value}", 
                                              font_size=10, color=text_color)
-                y -= 5
+                y -= 8  # Consistent spacing between items
             
-            y -= 10
+            y -= 15  # Space between subsections
         
-        y -= 20
+        y -= 25  # Space between sections
     
     # Enhanced Graph Section
     if "graph" in json_data:
         # Start new page for graphs
         c.showPage()
         draw_page_header(c)
-        y = height - 120
+        y = height - 140
         
-        y = draw_section_header(c, margin, y, "📊 PSYCHOLOGICAL METRICS", width)
+        y = draw_section_header(c, margin, y, "PSYCHOLOGICAL METRICS", width)
         
         # Create summary of all metrics
         all_metrics = []
@@ -328,32 +417,31 @@ def create_pdf_from_json(json_data, filename):
         y = draw_subsection_header(c, margin, y, "Assessment Scores (Ranked by Severity)")
         
         for name, score, category in all_metrics:
-            if y < 140:
+            if y < 170:
                 c.showPage()
                 draw_page_header(c)
-                y = height - 120
+                y = height - 140
             
             y = draw_metric_box(c, margin + 20, y, f"{name} ({category.title()})", score, width - 2*margin - 40)
-            y -= 5
         
-        # Add interpretation guide
-        y -= 20
-        if y < 200:
+        # Add interpretation guide with proper spacing
+        y -= 30
+        if y < 250:
             c.showPage()
             draw_page_header(c)
-            y = height - 120
+            y = height - 140
         
-        y = draw_subsection_header(c, margin, y, "📈 Score Interpretation Guide")
+        y = draw_subsection_header(c, margin, y, "Score Interpretation Guide")
         
         interpretation = [
-            "🟢 Low (1-3): Minimal concern, within normal range",
-            "🟡 Moderate (4-6): Some attention needed, monitor progress", 
-            "🔴 High (7-10): Significant concern, priority for intervention"
+            "Low (1-3): Minimal concern, within normal range",
+            "Moderate (4-6): Some attention needed, monitor progress", 
+            "High (7-10): Significant concern, priority for intervention"
         ]
         
         for interp in interpretation:
             y = draw_enhanced_wrapped_text(c, margin + 20, y, interp, font_size=10)
-            y -= 5
+            y -= 8
     
     # Footer on last page
     c.setFont("Helvetica-Oblique", 8)
