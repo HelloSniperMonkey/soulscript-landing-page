@@ -74,7 +74,7 @@ const KnowAboutMe: React.FC = () => {
         console.log("Auth ID:", authId);
         
         // Make the API request
-        const response = await fetch("http://127.0.0.1:8000/getReport", {
+        const response = await fetch("api/getReport", {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

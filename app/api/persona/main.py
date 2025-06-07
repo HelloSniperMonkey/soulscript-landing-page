@@ -12,6 +12,9 @@ from data import data_chat_extraction, analyze_journal_entries,gen_mindlogpdf
 from conv import extract_information_gemini, generate_rag, extract_graph_info
 from mail import create_pdf_from_json, sendEmail  # You need to define this
 
+from chat import reflection_chatbot
+from dataSync import isPersonaUpdateNeeded, personaInfo, updatePersona
+import json
 
 app = FastAPI()
 
@@ -20,7 +23,7 @@ origins = [
     "https://localhost.tiangolo.com",
     "http://localhost",
     "http://localhost:8080",
-    "http://localhost:3000",
+    "http://localhost:3001",
 ]
 
 app.add_middleware(
@@ -30,57 +33,55 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 @app.post("/getReport")
 async def get_report(request: Request):
     try:
         payload = await request.json()
         authId = payload.get("authId")
-        user_email = payload.get("email")  # 💡 Add email in the frontend request
 
-        if not authId or not user_email:
-            return JSONResponse(content={"error": "Missing authId or email in request"}, status_code=400)
+        if not authId:
+            return JSONResponse(content={"error": "Missing authId in request"}, status_code=400)
+        if(isPersonaUpdateNeeded(authId)):
+            info_json, graph_json = await updatePersona(authId)
+        else:
+            user_info = personaInfo(authId)
+            if user_info:
+                user_info_json = json.loads(user_info)
+                info_json, graph_json = user_info_json.get("Info"), user_info_json.get("Graph")
+            else:
+                # Handle the case where user_info is None or empty
+                return JSONResponse(content={"error": "User information not found or is empty"}, status_code=404)
 
-        # Step 1: Extract chat + journal data using authId
-        chat_data = data_chat_extraction(authId, "json")
-        journal_json = analyze_journal_entries(authId)
-
-        # Step 2: Generate combined RAG result
-        rag_result = generate_rag(chat_data=chat_data, journal_analysis=journal_json)
-
-        # Step 3: Extract info + graph in parallel
-        info_task = asyncio.to_thread(extract_information_gemini, rag_result)
-        graph_task = asyncio.to_thread(extract_graph_info, rag_result)
-        info_json, graph_json = await asyncio.gather(info_task, graph_task)
-
-        # Step 4: Generate PDF report from info + graph
-        data = {
-            "info": info_json,
-            "graph": graph_json
-        }
-
-        # Save to temporary file
-        with NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-            pdf_path = tmp.name
-            create_pdf_from_json(data, pdf_path)
-
-        # Step 5: Send Email with PDF attached
-        sendEmail(
-            Name="SoulScript System",
-            To=user_email,
-            subject="Your Therapy Assessment Report",
-            message="Attached is your report.Please review the PDF for detailed insights.",
-            attachment_path=pdf_path
-        )
-
-        # Optional: remove PDF after sending
-        os.remove(pdf_path)
-
-        return JSONResponse(content={"info": info_json, "graph": graph_json, "status": "Email Sent"}, status_code=200)
+        return JSONResponse(content={"info": info_json, "graph": graph_json}, status_code=200)
 
     except Exception as e:
         return JSONResponse(content={"error": f"Internal server error: {str(e)}"}, status_code=500)
 
+@app.post("/chat")
+async def chat(request: Request):
+    try:
+        payload = await request.json()
+        authId = payload.get("authId")
+        user_message = payload.get("userMessage")
+        user_info = personaInfo(authId)
+
+        if not authId or not user_message:
+            return JSONResponse(content={"error": "Missing authId or userMessage in request"}, status_code=400)
+
+        if not isPersonaUpdateNeeded(authId) or not user_info is None:
+            # Generate RAG response
+            rag_response = reflection_chatbot(user_message=user_message, user_info=user_info)
+        else:
+            # Update persona and then generate RAG response
+            updatePersona(authId, user_message)
+            rag_response = reflection_chatbot(user_message=user_message, user_info=user_info)
+        if not rag_response:
+            return JSONResponse(content={"error": "No response generated"}, status_code=404)
+
+        return JSONResponse(content={"response": rag_response}, status_code=200)
+
+    except Exception as e:
+        return JSONResponse(content={"error": f"Internal server error: {str(e)}"}, status_code=500)
 @app.post("/getMindLogReport")
 async def get_report(request: Request):
     try:
