@@ -33,29 +33,68 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 @app.post("/getReport")
 async def get_report(request: Request):
     try:
         payload = await request.json()
         authId = payload.get("authId")
+        user_email = payload.get("email")
 
-        if not authId:
-            return JSONResponse(content={"error": "Missing authId in request"}, status_code=400)
-        if(isPersonaUpdateNeeded(authId)):
+        if not authId or not user_email:
+            return JSONResponse(content={"error": "Missing authId or email in request"}, status_code=400)
+
+        # If update is needed → update and return, skip further processing
+        if isPersonaUpdateNeeded(authId):
             info_json, graph_json = await updatePersona(authId)
-        else:
-            user_info = personaInfo(authId)
-            if user_info:
-                user_info_json = json.loads(user_info)
-                info_json, graph_json = user_info_json.get("Info"), user_info_json.get("Graph")
-            else:
-                # Handle the case where user_info is None or empty
-                return JSONResponse(content={"error": "User information not found or is empty"}, status_code=404)
+            return JSONResponse(content={
+                "info": info_json,
+                "graph": graph_json,
+                "status": "Persona updated and stored. Skipping PDF generation."
+            }, status_code=200)
 
-        return JSONResponse(content={"info": info_json, "graph": graph_json}, status_code=200)
+        # Otherwise, fetch stored persona info and proceed to report/email
+        persona_raw = personaInfo(authId)
+        if not persona_raw:
+            return JSONResponse(content={"error": "Stored persona data not found"}, status_code=404)
+
+        persona_data = json.loads(persona_raw)
+        info_json = persona_data.get("Info")
+        graph_json = persona_data.get("Graph")
+
+        if not info_json or not graph_json:
+            return JSONResponse(content={"error": "Incomplete persona data"}, status_code=500)
+
+        # Step: Generate PDF report from saved persona data
+        data = {
+            "info": info_json,
+            "graph": graph_json
+        }
+
+        with NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+            pdf_path = tmp.name
+            create_pdf_from_json(data, pdf_path)
+
+        # Step: Send Email with PDF
+        sendEmail(
+            Name="SoulScript System",
+            To=user_email,
+            subject="Your Therapy Assessment Report",
+            message="Attached is your report. Please review the PDF for detailed insights.",
+            attachment_path=pdf_path
+        )
+
+        os.remove(pdf_path)
+
+        return JSONResponse(content={
+            "info": info_json,
+            "graph": graph_json,
+            "status": "Email sent using previously saved persona info."
+        }, status_code=200)
 
     except Exception as e:
         return JSONResponse(content={"error": f"Internal server error: {str(e)}"}, status_code=500)
+
 
 @app.post("/chat")
 async def chat(request: Request):
