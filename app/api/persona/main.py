@@ -25,6 +25,7 @@ origins = [
     "http://localhost",
     "http://localhost:8080",
     "http://localhost:3001",
+    "http://localhost:3000"
 ]
 
 app.add_middleware(
@@ -142,6 +143,11 @@ async def chat(request: Request):
 
     except Exception as e:
         return JSONResponse(content={"error": f"Internal server error: {str(e)}"}, status_code=500)
+
+
+import base64
+from fastapi.responses import JSONResponse
+
 @app.post("/getMindLogReport")
 async def get_report(request: Request):
     try:
@@ -151,41 +157,45 @@ async def get_report(request: Request):
         numdays = payload.get("numdays")
 
         if not authId or not user_email:
-            return JSONResponse(content={"error": "Missing authId or email in request"}, status_code=400)
+            return JSONResponse(content={"error": "Missing authId or email"}, status_code=400)
 
-        # ✅ Generate unique filename using timestamp and UUID
+        # Generate unique filename
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        unique_id = uuid.uuid4().hex[:8]  # Shorten UUID for filename
+        unique_id = uuid.uuid4().hex[:8]
         filename = f"mindlog_{authId}_{timestamp}_{unique_id}"
-        
+        pdf_path = gen_mindlogpdf(authId, numdays, filename)
 
-        
-
-        # ✅ Generate the PDF at this unique path
-        pdf_path= gen_mindlogpdf(authId, numdays, filename)
-
-        # 📧 Send Email with PDF attached
+        # Send email
         sendEmail(
             Name="SoulScript System",
             To=user_email,
             subject="Your MindLog Report",
-            message="Attached is your report. Please review the PDF for detailed insights.",
+            message="Attached is your report.",
             attachment_path=pdf_path
         )
 
-        # 🧹 Clean up the file
+        # Convert PDF to base64
+        with open(pdf_path, "rb") as pdf_file:
+            encoded_pdf = base64.b64encode(pdf_file.read()).decode("utf-8")
+
+        # Clean up
         os.remove(pdf_path)
         os.remove(f"{filename}-mood_trend.png") 
         os.remove(f"{filename}-emotional_composition.png") 
         os.remove(f"{filename}-emotion_radar.png") 
 
-
-
-        return JSONResponse(content={"message": "Email Sent"}, status_code=200)
+        return JSONResponse(content={
+            "message": "Report emailed and returned as base64",
+            "pdf_base64": encoded_pdf
+        })
 
     except Exception as e:
-        return JSONResponse(content={"error": f"Internal server error: {str(e)}"}, status_code=500)
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
+
+import base64
+from tempfile import NamedTemporaryFile
+from fastapi.responses import JSONResponse
 
 @app.post("/getChatSummary")
 async def get_report(request: Request):
@@ -194,17 +204,16 @@ async def get_report(request: Request):
         authId = payload.get("authId")
         user_email = payload.get("email")
 
-        # Step 1: Extract chat + journal data using authId
+        # Step 1: Extract chat + journal data
         chat_data = data_chat_extraction(authId, "json")
         md_data = json_to_md(chat_data)
-        # Step: Generate PDF report from saved persona data
-        
 
+        # Step 2: Generate PDF into a temp file
         with NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
             pdf_path = tmp.name
             save_to_pdf(md_data, pdf_path)
 
-        # Step: Send Email with PDF
+        # Step 3: Send PDF via Email
         sendEmail(
             Name="SoulScript System",
             To=user_email,
@@ -213,11 +222,16 @@ async def get_report(request: Request):
             attachment_path=pdf_path
         )
 
-        
+        # Step 4: Encode PDF as base64 for frontend
+        with open(pdf_path, "rb") as f:
+            encoded_pdf = base64.b64encode(f.read()).decode("utf-8")
+
+        # Step 5: Clean up
+        os.remove(pdf_path)
 
         return JSONResponse(content={
-            
-            "status": "Email sent using previously saved persona info."
+            "status": "Email sent with report",
+            "pdf_base64": encoded_pdf
         }, status_code=200)
 
     except Exception as e:
